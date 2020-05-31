@@ -15,10 +15,11 @@ These are:
 - sm64tt_v1_2_NO_IMG.zip
 - sm64tt_v1_NO_IMG.zip
 - sm64tt_beta_NO_IMG.zip
-With these builds, you'll need to copy the `img` directory from this repo and add it to the contents of the zip, otherwise you'll have a very sad gameplay experience. 
+With these builds, you'll need to copy the `img` directory from this repo and add it to the contents of the zip, otherwise you'll have a very sad gameplay experience.
 
-The original executable is preserved in its original state.
+The original executable is preserved in its original state, alongside the prototype.
 - sm64tt_v1.exe
+- sm64tt_proto.exe
 
 
 v1.2 (09/01/18): Added a "large screen" mode.
