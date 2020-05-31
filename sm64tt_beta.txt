@@ -1,0 +1,1392 @@
+MAIN GAME
+**************************************************************************************************************************************************
+/*Super Mario 64: Toad's Terror (Final Summative)
+June 18th, 2018
+By Owen and Kevin
+Our final project, containing everything we've learned this year*/
+package toad;
+
+import toad.*;
+import java.io.*;
+import java.awt.*;
+import java.util.*;
+import javax.swing.*;
+
+public class game{	
+
+	private static void delay(){
+        /*The delay function returns! At this point I don't really need to comment it.*/    
+        try{
+            Thread.sleep(6500);//6.5 seconds
+        }
+        catch (InterruptedException e)
+        {           
+            System.out.println("oh no the program broke. fix the delay function");
+        }
+    }
+
+	public static void main(String[] args){	
+		Scream scream = new Scream();//Yes I made a whole object for this
+		scream.scream();//AHHHHHHHHHHHHHHHHHHH
+		Window window = new Window("Super Mario 64: Toad's Terror");//Create our window
+		//Here we set the initial values for the window components
+		window.setImage("img/story/bupspook.gif");
+		window.setDialog("<html>Enter your name below to begin.<br><br>Horrors await.</html>");
+		window.setSprite("img/sprites/TDemon.png");
+		window.setNPCName("Toad's Terror");
+		Boolean setup = true;//Setup means we're waiting on the first screen
+		String name = null;//To hold the player's name
+		while(setup){//Go until we're not waiting
+			if(!window.getInput().equals(null)&&!window.getInput().equals("")){
+				//If their input isn't null or empty, they've given us a name
+				name = window.getInput();//So get their name
+				setup = false;//No longer waiting
+			}
+		}
+		Player player = new Player(name);//Create a player object with that name
+		window.setDialog("<html>Welcome, "+name+"!</hmtl>");//Welcome message
+		window.clearInput();//Clear the input
+		delay();//delay
+
+
+		player.setStartTime();//Get the time they started playing. We compare this later to the time they ended to determine how long it took to win
+
+		
+		ArrayList<String> allStory = new ArrayList<String>();//Arraylist to hold all the story details from the file
+		int currentChap = 1;//Current chapter of the story. Starts at 1, cause thats the first chapter
+		Boolean gameOn = true;//Are they playing?
+
+		/*File io, we load data from story.txt*/
+		try{
+			/*Use bufferedreader to get the contents of the story.txt file
+			and put each line into that arraylist
+			I'm sure this is simple enough to not comment, right?*/
+
+			int x = 0;//Counter
+			String line = null;//To hold the line
+			FileReader fr = new FileReader("story.txt");
+			BufferedReader br = new BufferedReader(fr);
+
+			while ((line = br.readLine()) != null)
+	        {
+	            allStory.add(x, line);
+	            x++;
+	        }
+	        br.close();//Close the buffered reader
+		}catch (IOException e){}
+		
+		//Loop that will go until the game is done
+		while(gameOn){
+			//The current chapter variable goes as high as 140. At that point, the game is done.
+			if (currentChap==140) {
+				break;
+			}
+			/*We have formatted our story data in a text file where the data for each event is on its own line, and the individual parts of data are separated by ,,
+			 The reason we used ,, instead of , is because our story narration might use a single comma*/
+			String[] currentStoryData = allStory.get(currentChap).split(",,");
+			StoryEvent story = null;
+			//Create a story event from the data we got from the file
+			/*Here we take advantage of StoryEvent's multiple constructors*/
+			if(currentStoryData.length==14)//Checking for that extra int meaning we need to add a diary
+			{
+				story = new StoryEvent(currentStoryData[0], currentStoryData[1], currentStoryData[2], currentStoryData[3], Boolean.parseBoolean(currentStoryData[4]), currentStoryData[5], currentStoryData[6], currentStoryData[7], currentStoryData[8], Integer.parseInt(currentStoryData[9]),Integer.parseInt(currentStoryData[10]),Integer.parseInt(currentStoryData[11]),Integer.parseInt(currentStoryData[12]), currentStoryData[13]);
+			}
+			else if(currentStoryData.length==15){//Checking for a boolean and sting, meaning something with an item is happening
+				story = new StoryEvent(currentStoryData[0], currentStoryData[1], currentStoryData[2], currentStoryData[3], Boolean.parseBoolean(currentStoryData[4]), currentStoryData[5], currentStoryData[6], currentStoryData[7], currentStoryData[8], Integer.parseInt(currentStoryData[9]),Integer.parseInt(currentStoryData[10]),Integer.parseInt(currentStoryData[11]),Integer.parseInt(currentStoryData[12]), Boolean.parseBoolean(currentStoryData[13]), currentStoryData[14]);
+			}
+			else{
+				story = new StoryEvent(currentStoryData[0], currentStoryData[1], currentStoryData[2], currentStoryData[3], Boolean.parseBoolean(currentStoryData[4]), currentStoryData[5], currentStoryData[6], currentStoryData[7], currentStoryData[8], Integer.parseInt(currentStoryData[9]),Integer.parseInt(currentStoryData[10]),Integer.parseInt(currentStoryData[11]),Integer.parseInt(currentStoryData[12]));
+			}
+			
+			//Assign the values we got for the current story event to the various window components
+			window.setDialog(story.writeStory());  
+			window.setImage(story.getImage());
+			window.setSprite(story.getSprite());
+			window.setNPCName(story.getNPCName());
+
+			/*Stuff that happens if we're getting a new diary page*/
+			if (story.addDiary()!=null) {
+				window.enableDiary();//Unlock the diary, if it isn't already
+				player.addDiaryPage(story.addDiary());//Add the page
+				player.orderDiaryPages();//Sort the pages
+				Window.getDiaryBox().refresh(player.getDiary().returnPaths(), player.getDiary().getLength());//Here we call the refresh values to update the values in the DiaryView window
+			}
+
+			/*Code for getting a new item*/
+			if (story.addItem()){
+				player.addItem(story.getItemName());//Add that item to the player's inventory
+			}
+
+			/*Code for when we need to use an item to progress*/
+			if (!story.addItem()&&!story.getItemName().equals("")){//we must need to use an item
+				if(player.checkForItem(story.getItemName())){//Check if the player has that item
+					delay();//Delay
+					currentChap = story.getNextChap(1);//Go to the event for having the item
+					window.clearInput();//Clear any text in the input textbox
+				}
+				else{//Else they don't have it
+					delay();//Delay
+					currentChap = story.getNextChap(2);//go to the event for not having the item
+					window.clearInput();//Clear any text in the input textbox
+				}
+			}
+			/*Code for normal event (no items or diary pages)*/
+			else{
+				//If the current story event is just text and does not present any options to the player, advance to the next one after a while
+				if (story.autoAdvance()) {	
+					delay();//Delay
+					currentChap = story.getNextChap(1);//Find out which event is next
+					window.clearInput();//Clear any text in the input textbox
+				}
+				else{
+					String input = window.getInput();//Get the user's input
+					if (input.equals(story.getOption(1))) {//If the user's input is equal to the first option...
+						System.out.println("you said "+window.getInput());//debug
+						currentChap = story.getNextChap(1);//get the destination for the first option
+						window.clearInput();//Clear the input box
+					}
+					else if (input.equals(story.getOption(2))) {//Same thing, but for option 2
+						System.out.println("you said "+window.getInput());
+						currentChap = story.getNextChap(2);
+						window.clearInput();
+					}
+					else if (input.equals(story.getOption(3))) {//Same thing, but for option 3	
+						System.out.println("you said "+window.getInput());
+						currentChap = story.getNextChap(3);
+						window.clearInput();
+					}
+					else if (input.equals(story.getOption(4))) {//Same thing, but for option 4
+						System.out.println("you said "+window.getInput());
+						currentChap = story.getNextChap(4);
+						window.clearInput();
+					}
+					input = null;//Reset our input variable for the next time					
+				}	
+			}		
+		}		
+		/*Once the loop is done, this stuff happens*/
+		player.setEndTime();//Get the time they finished
+		scream.scream();//AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+		//Set the window components to the stuff they should show at the end
+		window.setImage("img/story/end.png");
+		//In this message, we get the playTime value, which is calculated from the start and end times. This is the "time code" for the website
+		window.setDialog("<html>Congratulations.<br><br>You have conquered your worst fear.<br><br>Your <u>time code</u> is: "+player.getPlayTime()+"<br><br>Enter this code <a href='http://sdsscomputers.com/OwenGoodwin/'>online</a> to claim your spot on the leaderboard.</html>");
+		window.setSprite("img/sprites/TDemon.png");
+		window.setNPCName("Toad's Terror");
+	}
+}
+DIARY CLASS
+**************************************************************************************************************************
+package toad;
+import java.util.*;
+
+
+/*The Diary class inheriets from Java's ArrayList in order to hold all of the DairyPages the user collects*/
+public class Diary extends ArrayList<DiaryPage>{
+	private static final long serialVersionUID = 1234567890L;//Not important
+
+	/*********************
+	Constructors for Diary
+	*********************/
+	Diary(){//No parameters
+		super();//Parnet constructor
+	}
+
+	/****************
+    Methods for Diary
+    ****************/
+
+	/*Access method to add a DiaryPage to the Diary*/
+	void addPage(DiaryPage page){
+		this.add(page);
+	}
+
+	/*Bubble sorting to put the pages in order by their page number*/
+	void sortPages(){
+		for (int x = 0; x<this.size()-1; x++) {
+			for (int y = 0; y<this.size()-1; y++) {
+				if (this.get(y).getPageNumber() > this.get(y+1).getPageNumber()) {
+					DiaryPage temp = this.get(y);
+					this.set(y, this.get(y+1));
+					this.set(y+1, temp);
+				}
+			}
+		}
+	}
+
+	/*Returns an array containing the paths to the image for each of the DiaryPages we've collected*/
+	String[] returnPaths(){
+		String[] paths = new String[this.size()];//New array same length of Diary
+		for (int x = 0; x<paths.length; x++) {//Loop through each page
+			paths[x] = this.get(x).getImagePath();//Get the image path, add it to the array
+		}
+		return paths;//return the array
+	}
+
+	/*Access method for the size/length of the Diary*/
+	int getLength(){
+		// System.out.println("size: "+this.size());
+		return this.size();
+	}
+}
+DIARYPAGE CLASS
+**********************************************************************************************************************************************************************
+package toad;
+
+/*DiaryPage is basically a subclass of Item*/
+public class DiaryPage extends Item{
+
+	private String page = null;//This takes the place of Item's 'name'
+	private int pageNumber = 0;//We keep the page number as a string and an int for simplicity's sake
+	private String imagePath = null;//To hold the path to the image for this page
+
+	/*************************
+	Constructors for DiaryPage
+	*************************/
+	DiaryPage(String number){//Same parameters as Item's constructor
+		super(number);//Call Item constructor
+		this.page = number;//Store our page number as a string...
+		this.pageNumber = Integer.parseInt(number);//and as an int
+		this.imagePath = "img/diary/"+this.page+".png";//get our image path 
+		//Diary page images are in the img/diary folder, and named 1.png, 2.png, etc
+	}
+
+	/********************
+    Methods for DiaryPage
+    ********************/
+	//Access method for the page number
+	int getPageNumber(){
+		return this.pageNumber;
+	}
+
+	//Access method for the image path
+	String getImagePath(){
+		return this.imagePath;
+	}
+}
+DIARYVIEW CLASS
+****************************************************************************************************************************************************************
+package toad;
+
+import toad.*;
+import java.io.*;
+import java.awt.*;
+import java.util.*;
+import javax.swing.*;
+import java.awt.event.*;
+import javax.swing.border.Border;
+
+/*DiaryView extends JFrame, so we override some JFrame methods*/
+/*DiaryView is the window that allows the player to scroll through all the DiaryPages stored in the Diary*/
+/*We also IMPLEMENT ActionListener, so that we can tell the program to do stuff when an action happens*/
+public class DiaryView extends JFrame implements ActionListener{    
+	private static final long serialVersionUID = 1234567890L;//not important
+
+    /*HEY LOOK STATIC MEMBERS*/
+    /*These two objects, stream and roboto, are used to load our font file when creating the window
+    and aren't needed in the Window object once created.*/
+	private static InputStream stream = null;
+	private static Font roboto = null;
+
+    //Here are the window components
+    private JPanel container = null;//Container (holds all the rest)
+    private JButton next = null;//"Next page" button
+    private JLabel image = null;//Image (will display the image)
+
+    //Variables used when displaying the images
+    /*LOOK MR. KRNIC ITS A CONSTANT WOOHOO*/
+    private final int minIndex = 1;//The lowest number page we want to see is the first one, so this won't ever change
+    private int maxIndex = 0;//Maximum index. This changes depending on how many pages we have
+    private int index = 0;//Will represent which page we are viewing
+    private String[] paths = null;//The array of all the image paths (comes from Diary)
+
+
+    /*************************
+    Constructors for DiaryView
+    *************************/
+	DiaryView(String title){//Just needs a string for the window title
+		super(title);//Calling parent constructor here
+
+        /*Here we load in our font file*/
+		try{
+			stream = new FileInputStream("font/Roboto-Medium.ttf");
+			roboto =  Font.createFont(Font.TRUETYPE_FONT, stream);
+			GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(roboto);
+		}
+		catch(FileNotFoundException e){}//Catch all the possible errors		
+		catch(FontFormatException e){}
+		catch(IOException e){}
+
+        /*Setting some basic settings for the window*/
+		this.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);//Close when they hit close
+        this.setIconImage(new ImageIcon("img/wallpaper2.jpg").getImage());//set an icon to show in the taskbar, etc
+        this.setPreferredSize(new Dimension(605, 730));//set window size
+        this.setLocation(new Point(300, 5));//Set the location
+        this.setResizable(false);//Can't change the size
+
+        //A border object we will reuse when creating components
+        Border redBorder = BorderFactory.createLineBorder(Color.red, 6);
+
+        //Create our container panel
+        container = new JPanel();
+        container.setBackground(Color.black);//Black background
+        container.setLayout(null);//No stupid preset layouts
+        this.getContentPane().add(container);//Add it to the frame
+
+        /*Creating the image label*/
+        image = new JLabel("", SwingConstants.CENTER);//No text in the label
+        image.setSize(new Dimension(600, 600));//set the size
+        image.setLocation(new Point(0, 0));//Set the location
+        image.setOpaque(true);//Solid color
+        image.setBorder(redBorder);//Add that red border
+        image.setBackground(Color.black);//Black background
+        container.add(image);//Add it to the container
+
+        /*Creating the "next" button*/
+        next = new JButton("Next page ->");//Set the text in the button
+        next.setSize(new Dimension(600, 100));//Set the size
+        next.setLocation(new Point(0, 600));//Set the location
+        next.setBackground(Color.black);//Black background
+        next.setForeground(Color.white);//White text
+        next.setBorder(redBorder);//Add our red border
+        next.setFont(roboto.deriveFont(30f));//Use that font we imported
+        next.addActionListener(this);//Add an action listener(see methods below)
+        container.add(next);//Add it to the panel        
+
+        /*For the overall look of the window*/
+        try {
+            // Set System L&F
+	        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+	        //UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+	    }
+	    catch (UnsupportedLookAndFeelException e) {}//Catch all those pesky errors, which really should never show up anyways but it won't let me run the program if it doesn't have them
+	    catch (ClassNotFoundException e) {}
+	    catch (InstantiationException e) {}
+	    catch (IllegalAccessException e) {}
+
+	    /*and now we show the window*/
+        this.pack();       
+        this.setVisible(false);
+	}
+
+    /********************
+    Methods for DiaryView
+    ********************/
+    /*This is for the action listener on the next button*/
+    public void actionPerformed(ActionEvent evt) {
+        this.index++;//Increase the index value, cause we're viewing the next image
+        if (this.index>this.maxIndex) {//Little check to make sure we're not going past the last image
+            this.index = this.minIndex;//If we are set us back to #1
+        }
+        this.image.setIcon(new StretchIcon(this.paths[this.index-1]));//Update the image in the window
+    }
+
+    /*This function is called to update the paths and maxIndex whenever we get a new diarypage, 
+    and when the window opens. This way it is always up to date*/ 
+    void refresh(String[] paths, int newMax){//Needs a new array with paths and a new maxIndex
+        this.paths = paths;//Set our values to the new ones
+        this.maxIndex = newMax;
+        this.image.setIcon(new StretchIcon(this.paths[0]));//Set the image back to the first one
+    }    
+
+    /*This is to show the window. Basically an access method*/
+    void showDiary(){
+        this.setVisible(true);//We're visible!
+    }
+}
+INVENTORY CLASS
+*****************************************************************************************************************************************************************
+package toad;
+import java.util.*;
+
+/*Inventory inherits from ArrayList. Code is minimal, but it's made to hold all of the player's items.*/
+public class Inventory extends ArrayList<Item>{
+	private static final long serialVersionUID = 1234567890L;//Not important
+
+	/*************************
+	Constructors for Inventory
+	************************/
+	Inventory(){
+		super();//Call the parent constructor
+	}
+
+	/********************
+    Methods for Inventory
+    ********************/
+
+	//Access method to add an item
+	void addItem(Item item){
+		this.add(item);
+	}
+}
+ITEM CLASS
+*******************************************************************************************************************************************************************
+package toad;
+
+/*The Item class has a name. That's basically it, really*/
+public class Item{
+	private String name = null;//To hold the item's name
+
+	/********************
+	Constructors for Item
+	********************/
+	Item(String newName){//Needs a name. Just like a person
+		this.name = newName;//Set that name
+	}
+
+	/***************
+    Methods for Item
+    ***************/
+	//Access method for the name
+	String getName(){
+		return this.name;
+	}
+}
+PLAYER CLASS
+***************************************************************************************************************************************************************
+package toad;
+import java.util.*;
+
+/*The Player class contains the player's name, Variables for the times they started and ended, as well as an inventory and diary*/
+public class Player{
+
+	private String name = null;//Player's name
+	private Date startTime = null;//Times they started and ended
+	private Date endTime = null;
+	private Inventory inventory = null;//The player's inventory (to hold items)
+	private Diary diary = null;//the player's diary (to hold diary pages)
+
+	/**********************
+	Constructors for Player
+	**********************/
+	Player(String id){//We need a name
+		this.name = id;//Set their name
+		this.inventory = new Inventory();//Create their inventory and diary
+		this.diary = new Diary();
+	}
+
+	/*****************
+    Methods for Player
+    *****************/
+	/*Access emthod to add a page. Calls the addPage method in the player's diary*/
+	void addDiaryPage(String pageNumber){
+		this.diary.addPage(new DiaryPage(pageNumber));
+	}
+
+	/*Access method for adding an item to the player's inventory*/
+	void addItem(String itemName){
+		Item newItem = new Item(itemName);//create item object with the given name
+		this.inventory.addItem(newItem);//Add it to their inventory
+	}
+
+	//To set the start time
+	void setStartTime(){
+		this.startTime = new Date();
+	}
+
+	//To set the end time
+	void setEndTime(){
+		this.endTime = new Date();
+	}
+
+	//Returns an int representing the # of seconds to complete the game. Calculated from start and end times
+	int getPlayTime(){
+		return (int)((this.endTime.getTime() - this.startTime.getTime()) / 1000);//return our calculation
+	}	
+
+	/*To check if player has a certain item*/
+	Boolean checkForItem(String itemName){//Needs the name of the item we are looking for
+		Boolean hasItem = false;//Bool flag, set to true if we find it
+		for (int x = 0; x<this.inventory.size(); x++) {//Loop through each item in inventory
+			if (inventory.get(x).getName().equals(itemName)) {//Check if that item's name is equal to the name we are looking for
+				hasItem = true;//set our flag to true
+			}
+		}
+		return hasItem;//Return the bool representing if we found it or not
+	}
+
+	/*Access method to call the sortPages method of their diary*/
+	void orderDiaryPages(){
+		diary.sortPages();
+	}
+
+	/*Access method for the diary itself*/
+	Diary getDiary(){
+		return this.diary;
+	}
+}
+POINTYCARET CLASS (NOT MINE)
+****************************************************************************************************************************************************
+package toad;
+import java.awt.*;
+import javax.swing.text.*;
+
+/*PoinyCaret inherits from Java's DefaultCaret*/
+
+public class PointyCaret extends DefaultCaret {
+
+	private static final long serialVersionUID = 1234567890L;
+    private final String mark = "<";
+    //I made this string constant. This character is used for the cursor in the textbox
+
+    public PointyCaret() {
+        setBlinkRate(0);
+    }
+
+    @Override
+    protected synchronized void damage(Rectangle r) {
+        if (r == null) {
+            return;
+        }
+
+        JTextComponent comp = getComponent();
+        FontMetrics fm = comp.getFontMetrics(comp.getFont());
+        int textWidth = fm.stringWidth(">");
+        int textHeight = fm.getHeight();
+        x = r.x;
+        y = r.y;
+        width = textWidth;
+        height = textHeight;
+        repaint(); // calls getComponent().repaint(x, y, width, height)
+    }
+
+    @Override
+    public void paint(Graphics g) {
+        JTextComponent comp = getComponent();
+        if (comp == null) {
+            return;
+        }
+
+        int dot = getDot();
+        Rectangle r = null;
+        try {
+            r = comp.modelToView(dot);
+        } catch (BadLocationException e) {
+            return;
+        }
+        if (r == null) {
+            return;
+        }
+
+        if ((x != r.x) || (y != r.y)) {
+            repaint(); // erase previous location of caret
+            damage(r);
+        }
+
+        if (isVisible()) {
+            FontMetrics fm = comp.getFontMetrics(comp.getFont());
+            int textWidth = fm.stringWidth(">");
+            int textHeight = fm.getHeight();
+
+            g.setColor(comp.getCaretColor());
+            g.drawString(mark, x, y + fm.getAscent());
+        }
+    }
+}
+SCREAM CLASS
+********************************************************************************************************************************************
+package toad;
+
+import toad.*;
+import java.io.*;
+import java.util.*;
+import javax.sound.sampled.*;
+
+/*It plays a toad screaming sound. That's it.*/
+public class Scream{
+
+	private static final long serialVersionUID = 1234567890L; 
+    private static final String path = "aud/ahh.wav";//Static and constant, look at that!
+    private File file = null;//To hold the file data and audio clip
+    private Clip clip = null;
+
+    /**********************
+    Constructors for Scream
+    **********************/
+    Scream(){
+        file = new File(path);//Make a file object with the path we came up with
+    }
+
+    /*****************
+    Methods for Scream
+    *****************/
+    //Play the sound
+    void scream(){        
+        try {
+            this.unscream();//Stop any sound
+            AudioInputStream inputStream = AudioSystem.getAudioInputStream(this.file);//Find our file
+            this.clip = AudioSystem.getClip();//turn it into a clip object
+            this.clip.open(inputStream);//open it
+            this.clip.start();//start it
+        } catch (Exception e) {
+            this.unscream();//If it breaks, stop the sound
+        }
+    }
+
+    //To stop the sound
+    void unscream(){
+        if (this.clip != null) {//If there is any track running...
+            this.clip.stop();//stop it
+            this.clip.close();//close it
+            this.clip = null;//reset our clip object
+        }
+    }
+}
+STORYEVENT CLASS
+*********************************************************************************************************************************************
+package toad;
+import toad.*;
+
+/*Most important part of the game right here. A storyEvent contains everything needed to progress the story*/
+public class StoryEvent{
+
+	private String diary = null;//We store the page number of the dairy page we pick up as a string, actually
+	private int opt1chap = 0;//The destinations for the 4 options
+	private int opt2chap = 0;
+	private int opt3chap = 0;
+	private int opt4chap = 0;
+	private Boolean item = false;//Are we getting an item?
+	private Boolean options = false;//Are there options for the player?
+	private Boolean needItem = false;//Do we need an item?
+	private String eventText = null;//To hold the text displayed in the window
+	private String imagePath = null;//Path to this event's image
+	private String npcPath = null;//Path to this event's sprite
+	private String npcName = null;//Name that goes with the sprite (who is talking)
+	private String opt1 = null;//Strings containing the 4 options the player has
+	private String opt2 = null;
+	private String opt3 = null;
+	private String opt4 = null;	
+	private String itemPickUp = null;//Name of the item we are picking up
+
+	/**************************
+	Constructors for StoryEvent
+	**************************/
+	
+	/*Multiple constructors here for the StoryEvent class
+	The StoryEvent class requires quite a few parameters, and to cut down on the complexity, we created a second one for a specific scenario that isn't true in most StoryEvents*/
+
+	/*2nd constructor has an extra boolean for whether you pick up a diary page.
+	Since most story events don't involve collecting a page, we say false by default*/
+	StoryEvent(String story, String imgPath, String npcimgPath, String npcName, Boolean hasOptions, String opt1, String opt2, String opt3, String opt4, int opt1chap, int opt2chap, int opt3chap, int opt4chap){
+		this.eventText = story;
+		this.imagePath = imgPath;
+		this.npcPath = npcimgPath;
+		this.npcName = npcName;
+		this.options = hasOptions;
+		this.opt1 = opt1;
+		this.opt2 = opt2;
+		this.opt3 = opt3;
+		this.opt4 = opt4;
+		this.opt1chap = opt1chap;
+		this.opt2chap = opt2chap;
+		this.opt3chap = opt3chap;
+		this.opt4chap = opt4chap;
+		this.diary = null;//null by default, most StoryEvents don't involve picking up a DiaryPage
+		this.item = false;
+		this.itemPickUp = "";
+		this.needItem = false;
+	}
+
+	StoryEvent(String story, String imgPath, String npcimgPath, String npcName, Boolean hasOptions, String opt1, String opt2, String opt3, String opt4, int opt1chap, int opt2chap, int opt3chap, int opt4chap, String diaryNum){
+		this.eventText = story;
+		this.imagePath = imgPath;
+		this.npcPath = npcimgPath;
+		this.npcName = npcName;
+		this.options = hasOptions;
+		this.opt1 = opt1;
+		this.opt2 = opt2;
+		this.opt3 = opt3;
+		this.opt4 = opt4;
+		this.opt1chap = opt1chap;
+		this.opt2chap = opt2chap;
+		this.opt3chap = opt3chap;
+		this.opt4chap = opt4chap;
+		this.diary = diaryNum;//Set it to what was specified (most likely true)
+		//If a StoryEvent does involve picking up a page, an additional boolean argument will be passed to the constructor.
+		this.item = false;
+		this.itemPickUp = "";
+		this.needItem = false;
+	}
+
+	StoryEvent(String story, String imgPath, String npcimgPath, String npcName, Boolean hasOptions, String opt1, String opt2, String opt3, String opt4, int opt1chap, int opt2chap, int opt3chap, int opt4chap, Boolean getItem, String item){
+		this.eventText = story;
+		this.imagePath = imgPath;
+		this.npcPath = npcimgPath;
+		this.npcName = npcName;
+		this.options = hasOptions;
+		this.opt1 = opt1;
+		this.opt2 = opt2;
+		this.opt3 = opt3;
+		this.opt4 = opt4;
+		this.opt1chap = opt1chap;
+		this.opt2chap = opt2chap;
+		this.opt3chap = opt3chap;
+		this.opt4chap = opt4chap;
+		this.diary = null;
+		this.item = getItem;
+		this.itemPickUp = item;
+		if (!getItem) {
+			this.needItem = true;
+		}
+		else{
+			this.needItem = false;
+		}
+	}
+
+	/*********************
+	Methods for StoryEvent
+	*********************/
+
+	/*Here we have access methods for all of the state variables*/
+	String writeStory(){
+		return this.eventText;
+	}
+
+	String getImage(){
+		return this.imagePath;
+	}
+
+	String getSprite(){
+		return this.npcPath;
+	}
+
+	String getNPCName(){
+		return this.npcName;
+	}
+
+	Boolean autoAdvance(){
+		return !this.options;
+	}	
+
+	String addDiary(){
+		return this.diary;
+	}
+	
+
+	Boolean addItem(){
+		return this.item;
+	}
+
+	String getItemName(){
+		return this.itemPickUp;
+	}
+
+	/*The next two access methods take an int, representing which option we want
+	This means we don't need 4 access methods, just 1*/
+	//This one gets the text for an option
+	String getOption(int option){
+		if (option==1) {
+			return this.opt1;
+		}
+		else if (option==2) {
+			return this.opt2;
+		}
+		else if (option==3) {
+			return this.opt3;
+		}
+		else if (option==4) {
+			return this.opt4;
+		}
+		else{
+			return null;
+		}
+	}
+
+	//This one gets the number of an option
+	int getNextChap(int option){
+		if (option==1) {
+			return this.opt1chap;
+		}
+		else if (option==2) {
+			return this.opt2chap;
+		}
+		else if (option==3) {
+			return this.opt3chap;
+		}
+		else if (option==4) {
+			return this.opt4chap;
+		}
+		else{
+			return 0;
+		}
+	}
+
+	/*After we get a diarypage or an item, we set them back to null so we don't pick up the same item over and over again.*/
+	void diaryCollected(){
+		this.diary = null;
+	}
+	void itemCollected(){
+		this.item = false;
+	}
+}
+STRETCHICON CLASS (NOT MINE)
+**********************************************************************************************************************************
+/**
+ * @(#)StretchIcon.java	1.0 03/27/12
+ */
+package toad;
+
+/*StretchIcon inherits from Java's ImageIcon
+
+Both of these classes were found online and have been adapted to our needs, 
+but they aren't really our work
+
+Inheritance will also be found in our inventory system, which will Inherit from ArrayList.*/
+
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Insets;
+import java.awt.image.ImageObserver;
+import java.net.URL;
+import javax.swing.ImageIcon;
+
+/**
+ * An <CODE>Icon</CODE> that scales its image to fill the component area,
+ * excluding any border or insets, optionally maintaining the image's aspect
+ * ratio by padding and centering the scaled image horizontally or vertically.
+ * <P>
+ * The class is a drop-in replacement for <CODE>ImageIcon</CODE>, except that
+ * the no-argument constructor is not supported.
+ * <P>
+ * As the size of the Icon is determined by the size of the component in which
+ * it is displayed, <CODE>StretchIcon</CODE> must only be used in conjunction
+ * with a component and layout that does not depend on the size of the
+ * component's Icon.
+ * 
+ * @version 1.0 03/27/12
+ * @author Darryl
+ */
+public class StretchIcon extends ImageIcon {
+
+  private static final long serialVersionUID = 1234567890L;
+
+
+  /**
+   * Determines whether the aspect ratio of the image is maintained.
+   * Set to <code>false</code> to allow th image to distort to fill the component.
+   */
+  protected boolean proportionate = true;
+
+  /**
+   * Creates a <CODE>StretchIcon</CODE> from an array of bytes.
+   *
+   * @param  imageData an array of pixels in an image format supported by
+   *             the AWT Toolkit, such as GIF, JPEG, or (as of 1.3) PNG
+   *
+   * @see ImageIcon#ImageIcon(byte[])
+   */
+  public StretchIcon(byte[] imageData) {
+    super(imageData);
+  }
+
+  /**
+   * Creates a <CODE>StretchIcon</CODE> from an array of bytes with the specified behavior.
+   *
+   * @param  imageData an array of pixels in an image format supported by
+   *             the AWT Toolkit, such as GIF, JPEG, or (as of 1.3) PNG
+   * @param proportionate <code>true</code> to retain the image's aspect ratio,
+   *        <code>false</code> to allow distortion of the image to fill the
+   *        component.
+   *
+   * @see ImageIcon#ImageIcon(byte[])
+   */
+  public StretchIcon(byte[] imageData, boolean proportionate) {
+    super(imageData);
+    this.proportionate = proportionate;
+  }
+
+  /**
+   * Creates a <CODE>StretchIcon</CODE> from an array of bytes.
+   *
+   * @param  imageData an array of pixels in an image format supported by
+   *             the AWT Toolkit, such as GIF, JPEG, or (as of 1.3) PNG
+   * @param  description a brief textual description of the image
+   *
+   * @see ImageIcon#ImageIcon(byte[], java.lang.String)
+   */
+  public StretchIcon(byte[] imageData, String description) {
+    super(imageData, description);
+  }
+
+  /**
+   * Creates a <CODE>StretchIcon</CODE> from an array of bytes with the specified behavior.
+   *
+   * @see ImageIcon#ImageIcon(byte[])
+   * @param  imageData an array of pixels in an image format supported by
+   *             the AWT Toolkit, such as GIF, JPEG, or (as of 1.3) PNG
+   * @param  description a brief textual description of the image
+   * @param proportionate <code>true</code> to retain the image's aspect ratio,
+   *        <code>false</code> to allow distortion of the image to fill the
+   *        component.
+   *
+   * @see ImageIcon#ImageIcon(byte[], java.lang.String)
+   */
+  public StretchIcon(byte[] imageData, String description, boolean proportionate) {
+    super(imageData, description);
+    this.proportionate = proportionate;
+  }
+
+  /**
+   * Creates a <CODE>StretchIcon</CODE> from the image.
+   *
+   * @param image the image
+   *
+   * @see ImageIcon#ImageIcon(java.awt.Image)
+   */
+  public StretchIcon(Image image) {
+    super(image);
+  }
+
+  /**
+   * Creates a <CODE>StretchIcon</CODE> from the image with the specified behavior.
+   * 
+   * @param image the image
+   * @param proportionate <code>true</code> to retain the image's aspect ratio,
+   *        <code>false</code> to allow distortion of the image to fill the
+   *        component.
+   * 
+   * @see ImageIcon#ImageIcon(java.awt.Image) 
+   */
+  public StretchIcon(Image image, boolean proportionate) {
+    super(image);
+    this.proportionate = proportionate;
+  }
+
+  /**
+   * Creates a <CODE>StretchIcon</CODE> from the image.
+   * 
+   * @param image the image
+   * @param  description a brief textual description of the image
+   * 
+   * @see ImageIcon#ImageIcon(java.awt.Image, java.lang.String) 
+   */
+  public StretchIcon(Image image, String description) {
+    super(image, description);
+  }
+
+  /**
+   * Creates a <CODE>StretchIcon</CODE> from the image with the specified behavior.
+   *
+   * @param image the image
+   * @param  description a brief textual description of the image
+   * @param proportionate <code>true</code> to retain the image's aspect ratio,
+   *        <code>false</code> to allow distortion of the image to fill the
+   *        component.
+   *
+   * @see ImageIcon#ImageIcon(java.awt.Image, java.lang.String)
+   */
+  public StretchIcon(Image image, String description, boolean proportionate) {
+    super(image, description);
+    this.proportionate = proportionate;
+  }
+
+  /**
+   * Creates a <CODE>StretchIcon</CODE> from the specified file.
+   *
+   * @param filename a String specifying a filename or path
+   *
+   * @see ImageIcon#ImageIcon(java.lang.String)
+   */
+  public StretchIcon(String filename) {
+    super(filename);
+  }
+
+  /**
+   * Creates a <CODE>StretchIcon</CODE> from the specified file with the specified behavior.
+   * 
+   * @param filename a String specifying a filename or path
+   * @param proportionate <code>true</code> to retain the image's aspect ratio,
+   *        <code>false</code> to allow distortion of the image to fill the
+   *        component.
+   *
+   * @see ImageIcon#ImageIcon(java.lang.String)
+   */
+  public StretchIcon(String filename, boolean proportionate) {
+    super(filename);
+    this.proportionate = proportionate;
+  }
+
+  /**
+   * Creates a <CODE>StretchIcon</CODE> from the specified file.
+   *
+   * @param filename a String specifying a filename or path
+   * @param  description a brief textual description of the image
+   *
+   * @see ImageIcon#ImageIcon(java.lang.String, java.lang.String)
+   */
+  public StretchIcon(String filename, String description) {
+    super(filename, description);
+  }
+
+  /**
+   * Creates a <CODE>StretchIcon</CODE> from the specified file with the specified behavior.
+   * 
+   * @param filename a String specifying a filename or path
+   * @param  description a brief textual description of the image
+   * @param proportionate <code>true</code> to retain the image's aspect ratio,
+   *        <code>false</code> to allow distortion of the image to fill the
+   *        component.
+   *
+   * @see ImageIcon#ImageIcon(java.awt.Image, java.lang.String)
+   */
+  public StretchIcon(String filename, String description, boolean proportionate) {
+    super(filename, description);
+    this.proportionate = proportionate;
+  }
+
+  /**
+   * Creates a <CODE>StretchIcon</CODE> from the specified URL.
+   *
+   * @param location the URL for the image
+   *
+   * @see ImageIcon#ImageIcon(java.net.URL)
+   */
+  public StretchIcon(URL location) {
+    super(location);
+  }
+
+  /**
+   * Creates a <CODE>StretchIcon</CODE> from the specified URL with the specified behavior.
+   * 
+   * @param location the URL for the image
+   * @param proportionate <code>true</code> to retain the image's aspect ratio,
+   *        <code>false</code> to allow distortion of the image to fill the
+   *        component.
+   *
+   * @see ImageIcon#ImageIcon(java.net.URL)
+   */
+  public StretchIcon(URL location, boolean proportionate) {
+    super(location);
+    this.proportionate = proportionate;
+  }
+
+  /**
+   * Creates a <CODE>StretchIcon</CODE> from the specified URL.
+   *
+   * @param location the URL for the image
+   * @param  description a brief textual description of the image
+   *
+   * @see ImageIcon#ImageIcon(java.net.URL, java.lang.String)
+   */
+  public StretchIcon(URL location, String description) {
+    super(location, description);
+  }
+
+  /**
+   * Creates a <CODE>StretchIcon</CODE> from the specified URL with the specified behavior.
+   * 
+   * @param location the URL for the image
+   * @param  description a brief textual description of the image
+   * @param proportionate <code>true</code> to retain the image's aspect ratio,
+   *        <code>false</code> to allow distortion of the image to fill the
+   *        component.
+   *
+   * @see ImageIcon#ImageIcon(java.net.URL, java.lang.String)
+   */
+  public StretchIcon(URL location, String description, boolean proportionate) {
+    super(location, description);
+    this.proportionate = proportionate;
+  }
+
+  /**
+   * Paints the icon.  The image is reduced or magnified to fit the component to which
+   * it is painted.
+   * <P>
+   * If the proportion has not been specified, or has been specified as <code>true</code>,
+   * the aspect ratio of the image will be preserved by padding and centering the image
+   * horizontally or vertically.  Otherwise the image may be distorted to fill the
+   * component it is painted to.
+   * <P>
+   * If this icon has no image observer,this method uses the <code>c</code> component
+   * as the observer.
+   *
+   * @param c the component to which the Icon is painted.  This is used as the
+   *          observer if this icon has no image observer
+   * @param g the graphics context
+   * @param x not used.
+   * @param y not used.
+   *
+   * @see ImageIcon#paintIcon(java.awt.Component, java.awt.Graphics, int, int)
+   */
+  @Override
+  public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
+    Image image = getImage();
+    if (image == null) {
+      return;
+    }
+    Insets insets = ((Container) c).getInsets();
+    x = insets.left;
+    y = insets.top;
+
+    int w = c.getWidth() - x - insets.right;
+    int h = c.getHeight() - y - insets.bottom;
+
+    if (proportionate) {
+      int iw = image.getWidth(c);
+      int ih = image.getHeight(c);
+
+      if (iw * h < ih * w) {
+        iw = (h * iw) / ih;
+        x += (w - iw) / 2;
+        w = iw;
+      } else {
+        ih = (w * ih) / iw;
+        y += (h - ih) / 2;
+        h = ih;
+      }
+    }
+
+    ImageObserver io = getImageObserver();
+    g.drawImage(image, x, y, w, h, io == null ? c : io);
+  }
+
+  /**
+   * Overridden to return 0.  The size of this Icon is determined by
+   * the size of the component.
+   * 
+   * @return 0
+   */
+  @Override
+  public int getIconWidth() {
+    return 0;
+  }
+
+  /**
+   * Overridden to return 0.  The size of this Icon is determined by
+   * the size of the component.
+   *
+   * @return 0
+   */
+  @Override
+  public int getIconHeight() {
+    return 0;
+  }
+}
+WINDOW CLASS
+*************************************************************************************************************************
+package toad;
+
+import toad.*;
+import java.io.*;
+import java.awt.*;
+import java.util.*;
+import javax.swing.*;
+import java.awt.event.*;
+import javax.swing.border.Border;
+
+/*Window extends JFrame, so we override some JFrame methods*/
+/*This is the main window the player interacts with*/
+
+public class Window extends JFrame implements ActionListener{
+    //Our window class contains static members that aren't found in the objects created from the class
+	private static final long serialVersionUID = 1234567890L;
+    //These two objects, stream and roboto, are used to load our font file when creating the window
+    //and aren't needed in the Window object once created.
+	private static InputStream stream = null;
+	private static Font roboto = null;
+    public static DiaryView diaryBox = new DiaryView("Toad's Diary");//The diary window. It's static cause it doesn't change. Also public because we access it in the game class
+
+    //The window components
+	private JPanel container = null;
+	private JTextField inputBox = null;
+	private JLabel speaker = null;
+	private JLabel name = null;
+	private JLabel text = null;
+	private JLabel image = null;
+    private JButton diaryBtn = null;
+    private JButton inventoryBtn = null;
+
+    private String input = "";//To hold the user input
+    private Boolean inputted = false;//Was there a valid input?
+
+    /**********************
+    Constructors for Window
+    **********************/
+
+	Window(String title){
+		super(title);//Calling parent constructor here
+
+        /*To load the font file*/
+		try{
+			stream = new FileInputStream("font/Roboto-Medium.ttf");
+			roboto =  Font.createFont(Font.TRUETYPE_FONT, stream);
+			GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(roboto);
+		}
+		catch(FileNotFoundException e){}//Catch all the possible errors		
+		catch(FontFormatException e){}
+		catch(IOException e){}	
+
+        /*Window settings*/
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);//Close when they hit close
+        this.setIconImage(new ImageIcon("img/wallpaper2.jpg").getImage());//set an icon to show in the taskbar, etc
+        this.setPreferredSize(new Dimension(325, 560));//set window size
+        this.setLocation(new Point(300, 5));//Set the location
+        this.setResizable(false);//Can't change size
+
+        Border redBorder = BorderFactory.createLineBorder(Color.red, 6);//Border object we apply to components later
+
+        //Container to hold the other components
+        container = new JPanel();
+        container.setBackground(Color.black);//Black background
+        container.setLayout(null);//No preset layouts
+        this.getContentPane().add(container);//add it to the frame
+
+        //This is where the user types stuff
+        inputBox = new JTextField();
+        inputBox.addActionListener(this);//Add an action listener (see methods below)
+        inputBox.setFocusable(true);//Can focus
+        inputBox.setSize(new Dimension(320, 50));//set size
+        inputBox.setLocation(new Point(0, 480));//Set the location
+        inputBox.setOpaque(true);//solid color
+        inputBox.setBackground(Color.black);//black background
+        inputBox.setForeground(Color.white);//white text
+        inputBox.setFont(roboto.deriveFont(15f));//set the font 
+        inputBox.setBorder(redBorder);//apply red border
+        inputBox.setCaretColor(Color.red);//set caret color
+        inputBox.setCaret(new PointyCaret());//use that special caret we made
+        container.add(inputBox);//add it to the container
+
+        //label for the image of the guy whos talking
+        speaker = new JLabel("", SwingConstants.CENTER);
+        speaker.setSize(new Dimension(105, 155));//set size
+        speaker.setLocation(new Point(0, 290));//Set the location
+        speaker.setOpaque(true);//solid background
+        speaker.setBackground(Color.black);//black background
+        speaker.setBorder(redBorder);//red border
+        container.add(speaker);//add it to the panel
+
+        //Label to show the name of the image above
+        name = new JLabel("NPC Name", SwingConstants.CENTER);
+        name.setSize(new Dimension(105, 45));//set size
+        name.setLocation(new Point(0, 440));//Set the location
+        name.setOpaque(true);//solid background
+        name.setBorder(redBorder);//red border
+        name.setBackground(Color.black);//black background
+        name.setForeground(Color.white);//white text
+        name.setFont(roboto.deriveFont(15f));//set the font
+        container.add(name);//add it to the panel
+
+        //Label to hold the story text
+        text = new JLabel("This is the text box", SwingConstants.LEFT);
+        text.setVerticalAlignment(SwingConstants.TOP);
+        text.setSize(new Dimension(220, 195));//set size
+        text.setLocation(new Point(100, 290));//Set the location
+        text.setOpaque(true);//solid background
+        text.setBackground(Color.black);//black background
+        text.setForeground(Color.white);//white text
+        text.setBorder(redBorder);//red border
+        text.setFont(roboto.deriveFont(15f));//set the font
+        text.setFocusable(true);//can focus
+        container.add(text);//add it to the panel
+
+        //To hold the big image for the story event
+        image = new JLabel("", SwingConstants.CENTER);
+        image.setSize(new Dimension(320, 240));//set size
+        image.setLocation(new Point(0, 0));//Set the location
+        image.setOpaque(true);//solid background
+        image.setBorder(redBorder);//red border
+        image.setBackground(Color.black);//black background
+        container.add(image);//add it to the panel
+
+        //Button to open the diary window
+        diaryBtn = new JButton("Open Diary...");//set the text
+        diaryBtn.setSize(new Dimension(320,50));//set the size
+        diaryBtn.setLocation(new Point(0,240));//set location
+        diaryBtn.setBackground(Color.black);//black background
+        diaryBtn.setForeground(Color.black);//white text to start
+        diaryBtn.setBorder(redBorder);//red border
+        diaryBtn.setFont(roboto.deriveFont(15f)); //set font 
+        diaryBtn.setFocusPainted(false);//no special effects
+        diaryBtn.setContentAreaFilled(false);
+        diaryBtn.setOpaque(false);//solid background
+        diaryBtn.addActionListener(this);//add an action listener(see below)
+        diaryBtn.setEnabled(false);//disabled until they get their first dairy page
+        container.add(diaryBtn);//add it to the panel        
+
+        /*Look and feel stuff*/
+        try {
+            // Set System L&F
+	        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+	        // UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+	    }
+	    catch (UnsupportedLookAndFeelException e) {}//Catch all those pesky errors, which really should never show up anyways but it won't let me run the program if it doesn't have them
+	    catch (ClassNotFoundException e) {}
+	    catch (InstantiationException e) {}
+	    catch (IllegalAccessException e) {}      
+
+        /*Make it visible*/	    
+        this.pack();       
+        this.setVisible(true);
+        inputBox.requestFocusInWindow();//Give focus to the input area
+	}
+
+    /*****************
+    Methods for Window
+    *****************/
+    //The next 4 are access methods to set the contents of the various components
+	void setDialog(String content){
+		this.text.setText(content);
+	}
+
+	void setImage(String path){
+		this.image.setIcon(new StretchIcon(path));
+	}
+
+	void setSprite(String path){
+		this.speaker.setIcon(new StretchIcon(path));
+	}
+
+	void setNPCName(String name){
+		this.name.setText(name);
+	}
+
+    /*This clears the input area*/
+    void clearInput(){
+        this.inputBox.setText("");
+        this.inputted = false;
+        this.input = "";
+    }
+
+    /*Stuff when an action happens from one of those action listeners*/
+    public void actionPerformed(ActionEvent evt) {
+        if (evt.getSource()==this.inputBox) {//If it's from the input box
+            this.input = inputBox.getText();//Get the input
+            this.inputted = true;//Yay they inputted
+        }
+        else if (evt.getSource()==this.diaryBtn){//Else if its the open diary button
+            Window.diaryBox.showDiary();//open the diary
+        }        
+    }
+
+    /*Used to get the input from the textbox*/
+    String getInput(){
+        if (!this.input.equals(null)) {//As long as there is text in the textbox,,
+            if (!this.input.equals("n/a")) {//Make sure some smartass can't put in "n/a" as input, because we use that to represent an option that doesn't exist in story.txt
+                this.inputted = false;
+                return this.input.toLowerCase();//return the input in lowercase so we can compare easily
+            }
+            else{//somebody typed n/a
+                this.inputted = false;
+                return "no input";//return "no input" instead, so it won't affect anything             
+            }            
+        }       
+        else{//They didn't type anything
+            this.inputted = false;
+            return "no input";//return "no input" so nothing happens
+        }
+    }
+
+    /*To enable the diary button*/
+    void enableDiary(){
+        this.diaryBtn.setEnabled(true);//enable it
+        this.diaryBtn.setForeground(Color.white); //make the text white
+    }
+
+    /*Access method (static) to get the diary window*/
+    static DiaryView getDiaryBox(){
+        return Window.diaryBox;
+    }
+
+}
