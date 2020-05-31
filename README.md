@@ -17,7 +17,7 @@ These are:
 - sm64tt_beta_NO_IMG.zip
 With these builds, you'll need to copy the `img` directory from this repo and add it to the contents of the zip, otherwise you'll have a very sad gameplay experience.
 
-The original executable is preserved in its original state, alongside the prototype.
+The original executable is preserved in its original state, alongside the early prototype build.
 - sm64tt_v1.exe
 - sm64tt_proto.exe
 
