@@ -8,7 +8,7 @@ This was a lot of fun to make, and it was absolute chaos. Definitely the highlig
 The best part of this project is the website that went along with it, preserved at http://the404.nl/software/sm64tt/
 
 **06/09/20:** Since the site is now hosted on GitHub pages, PHP-based stuff no longer works, including the sm64tt site. While it is still *technically* preserved on 404, it won't actually work unless I completely rewrite it, which defeats the whole purpose of preservation.
-06/09/20, a few hours later: It seems Mr. Krnic, our old CS teacher, still uses this project as an example. https://sebnic.info/_classTrees/ics4u/SUMMATIVE/ICS4UOwenGoodwin_Summative/index2.php
+06/09/20, a few hours later: It seems Mr. Krnic, our old CS teacher, still uses this project as an example. https://sebnic.info/_classTrees/ics4u/SUMMATIVE/ICS4UOwenGoodwin_Summative/index.php
 
 
 Made in collaboration with Kevin, our final project together.
