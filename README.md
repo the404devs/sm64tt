@@ -11,6 +11,8 @@ The best part of this project is the website that went along with it, preserved 
 
 **06/09/20, a few hours later:** It seems Mr. Krnic, our old CS teacher, still uses this project as an example. https://sebnic.info/_classTrees/ics4u/SUMMATIVE/ICS4UOwenGoodwin_Summative/index.php
 
+**06/20/20:** I've created a snapshot of the main page, with the php content removed. This breaks stuff like the login and leaderboards, but the main body of the site will be preserved at https://the404devs.github.io/sm64tt, since I can't guarantee Krnic will keep it on his site forever. I've removed the sm64tt site from the404 as I've preserved it the best I can here.
+
 
 Made in collaboration with Kevin, our final project together.
 
