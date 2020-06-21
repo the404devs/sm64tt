@@ -16,17 +16,4 @@ The best part of this project is the website that went along with it, preserved 
 
 Made in collaboration with Kevin, our final project together.
 
-
-Something to note: due to space requirements, I had to modify some of the builds to reduce their size.
-These are:
-- sm64tt_v1_2_NO_IMG.zip
-- sm64tt_v1_NO_IMG.zip
-- sm64tt_beta_NO_IMG.zip
-With these builds, you'll need to copy the `img` directory from this repo and add it to the contents of the zip, otherwise you'll have a very sad gameplay experience.
-
-The original executable is preserved in its original state, alongside the early prototype build.
-- sm64tt_v1.exe
-- sm64tt_proto.exe
-
-
 v1.2 (09/01/18): Added a "large screen" mode.
