@@ -7,13 +7,24 @@ This was a lot of fun to make, and it was absolute chaos. Definitely the highlig
 
 The best part of this project is the website that went along with it, preserved at https://sm64tt.the404.nl
 
-**06/09/20:** Since the site is now hosted on GitHub pages, PHP-based stuff no longer works, including the sm64tt site. While it is still *technically* preserved on 404, it won't actually work unless I completely rewrite it, which defeats the whole purpose of preservation.
+**06/09/2020:** Since the site is now hosted on GitHub pages, PHP-based stuff no longer works, including the sm64tt site. While it is still *technically* preserved on 404, it won't actually work unless I completely rewrite it, which defeats the whole purpose of preservation.
 
-**06/09/20, a few hours later:** It seems Mr. Krnic, our old CS teacher, still uses this project as an example. https://sebnic.info/_classTrees/ics4u/SUMMATIVE/ICS4UOwenGoodwin_Summative/index.php
+**06/09/2020, a few hours later:** It seems Mr. Krnic, our old CS teacher, still uses this project as an example. https://sebnic.info/_classTrees/ics4u/SUMMATIVE/ICS4UOwenGoodwin_Summative/index.php
 
-**06/20/20:** I've created a snapshot of the main page, with the php content removed. This breaks stuff like the login and leaderboards, but the main body of the site will be preserved at https://sm64tt.the404.nl, since I can't guarantee Krnic will keep it on his site forever. I've removed the sm64tt site from the404 as I've preserved it the best I can here.
+**06/20/2020:** I've created a snapshot of the main page, with the php content removed. This breaks stuff like the login and leaderboards, but the main body of the site will be preserved at https://sm64tt.the404.nl, since I can't guarantee Krnic will keep it on his site forever. I've removed the sm64tt site from the404 as I've preserved it the best I can here.
 
+**05/25/2021:** Seems like it's no longer on Krnic's site.
 
 Made in collaboration with Kevin, our final project together.
 
-v1.2 (09/01/18): Added a "large screen" mode.
+### *1.2 (09/01/2018)*
+----------------------
+-  Added a "large screen" mode.
+
+### *1.1 (06/18/2018)*
+----------------------
+- Last-minute bug fixes before submission.
+
+### *1.0 (06/15/2018)*
+----------------------
+- All finished!
